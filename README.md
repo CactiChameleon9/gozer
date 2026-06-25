@@ -14,7 +14,7 @@ The [example](example/) directory contains a barebones example of a Gozer site.
 You can install Gozer by first installing a Go compiler and then running:
 
 ```sh
-go install github.com/dannyvankooten/gozer
+go install github.com/dannyvankooten/gozer@latest
 ```
 
 ## Usage
