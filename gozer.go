@@ -32,6 +32,8 @@ type Site struct {
 	Pages []Page
 	Posts []Page
 
+	Feeds []FeedDef `toml:"feeds"`
+
 	Title   string `toml:"title"`
 	SiteUrl string `toml:"url"`
 	RootDir string
@@ -69,6 +71,13 @@ type Page struct {
 
 	// Deprecated: use Meta.
 	Attrs map[string]any `toml:"-"`
+}
+
+type FeedDef struct {
+	Title string `toml:"title"`
+	Path string `toml:"path"`
+	Filename string `toml:"filename"`
+	Length int `toml:"length"`
 }
 
 // parseFilename parses the URL path and optional date component from the given file path
@@ -333,7 +342,7 @@ func (s *Site) createSitemap() error {
 	return nil
 }
 
-func (s *Site) createRSSFeed() error {
+func (s *Site) createRSSFeed(feedDef FeedDef) error {
 	type Item struct {
 		Title       string `xml:"title"`
 		Link        string `xml:"link"`
@@ -358,14 +367,17 @@ func (s *Site) createRSSFeed() error {
 		Channel Channel  `xml:"channel"`
 	}
 
-	// add 10 most recent posts to feed
+	// Add specified number of posts to feed
 	n := len(s.Posts)
-	if n > 10 {
-		n = 10
+	if feedDef.Length > 0 && feedDef.Length < n {
+		n = feedDef.Length
 	}
 
 	items := make([]Item, 0, n)
 	for _, p := range s.Posts[0:n] {
+		if !strings.HasPrefix(p.Filepath, s.RootDir+feedDef.Path) {
+			continue
+		}
 		pageContent, err := p.ParseContent()
 		if err != nil {
 			log.Warn("error parsing content of %s: %s", p.Filepath, err)
@@ -385,7 +397,7 @@ func (s *Site) createRSSFeed() error {
 		Version: "2.0",
 		Atom:    "http://www.w3.org/2005/Atom",
 		Channel: Channel{
-			Title:         s.Title,
+			Title:         feedDef.Title,
 			Link:          s.SiteUrl,
 			Generator:     "Gozer",
 			LastBuildDate: time.Now().Format(time.RFC1123Z),
@@ -393,7 +405,7 @@ func (s *Site) createRSSFeed() error {
 		},
 	}
 
-	rssFeedFilename := filepath.Join("build", "feed.xml")
+	rssFeedFilename := filepath.Join("build", feedDef.Filename)
 	wr, err := os.Create(rssFeedFilename)
 	if err != nil {
 		return err
@@ -436,6 +448,17 @@ func parseConfig(s *Site, file string) error {
 	// ensure site url has trailing slash
 	if !strings.HasSuffix(s.SiteUrl, "/") {
 		s.SiteUrl += "/"
+	}
+
+	// Process feed filenames
+	for i := range s.Feeds {
+		if s.Feeds[i].Filename == "" {
+			log.Fatal("Feed \"%s\" has no filename configured in config.toml", s.Feeds[i].Title)
+		}
+		if !strings.HasSuffix(s.Feeds[i].Filename, ".xml") {
+			s.Feeds[i].Filename += ".xml"
+		}
+		fmt.Printf("Feed found: \"%s\"\n", s.Feeds[i].Filename);
 	}
 
 	return nil
@@ -535,7 +558,7 @@ func createDirectoryStructure(rootPath string) error {
 		Name    string
 		Content []byte
 	}{
-		{"config.toml", []byte("url = \"http://localhost:8080\"\ntitle = \"My website\"\n")},
+		{"config.toml", []byte("url = \"http://localhost:8080\"\ntitle = \"My website\"\n\n[[feeds]]\ntitle = \"My website feed\"\npath = \"content/\"\nfilename = \"feed.xml\"\nlength = 10\n")},
 		{"templates/default.html", []byte("<!DOCTYPE html>\n<head>\n\t<title>{{ .Title }}</title>\n</head>\n<body>\n{{ .Content }}\n</body>\n</html>")},
 		{"content/index.md", []byte("+++\ntitle = \"Gozer!\"\n+++\n\nWelcome to my website.\n")},
 		// TODO djot does not (yet) support front matter, and godjot does not parse it. Once the front-matter syntax is settled, this should change. +djot +frontmatter
@@ -646,9 +669,11 @@ func buildSite(rootPath string, configFile string) {
 		log.Warn("Error creating sitemap: %s\n", err)
 	}
 
-	// create RSS feed
-	if err := site.createRSSFeed(); err != nil {
-		log.Warn("Error creating RSS feed: %s\n", err)
+	// create RSS feeds
+	for _, feed := range site.Feeds {
+		if err := site.createRSSFeed(feed); err != nil {
+			log.Warn("Error creating RSS feed: %s\n", err)
+		}
 	}
 
 	// static files
