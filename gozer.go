@@ -610,18 +610,23 @@ func buildSite(rootPath string, configFile string) {
 		log.Fatal("Error reading content/: %s", err)
 	}
 
+	const maxConcurrentPages = 8
+
 	var wg sync.WaitGroup
+	slots := make(chan struct{}, maxConcurrentPages)
 
 	// build each individual page
 	for _, p := range site.Pages {
+		slots <- struct{}{} // Wait for a slot to become available
 		wg.Add(1)
 
 		go func(p Page) {
+			defer wg.Done()
+			defer func() { <-slots }()
+
 			if err := site.buildPage(&p); err != nil {
 				log.Warn("Error processing %s: %s\n", p.Filepath, err)
 			}
-
-			wg.Done()
 		}(p)
 	}
 
