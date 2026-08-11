@@ -591,6 +591,14 @@ func buildSite(rootPath string, configFile string) {
 			}
 			return rv
 		},
+		"Content": func(p Page) template.HTML {
+			content, err := p.ParseContent()
+			if (err != nil) {
+				return ""
+			}
+			return template.HTML(content)
+		},
+		"AsTime": time.Parse,
 	})
 	templates, err = temp.ParseGlob(filepath.Join(rootPath, "templates/*.html"))
 	if err != nil {
