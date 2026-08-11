@@ -152,7 +152,6 @@ func (p *Page) ParseContent() (string, error) {
 		fmt.Printf("Unknown file type %q (%q)\n", p.Filepath, filepath.Ext(p.Filepath))
 	case ".md":
 		var buf2 strings.Builder
-		fmt.Printf("processing %q\n", p.Filepath)
 		if err := md.Convert(fileContent, &buf2); err != nil {
 			return "", err
 		}
@@ -167,6 +166,8 @@ func (p *Page) ParseContent() (string, error) {
 }
 
 func (s *Site) buildPage(p *Page) error {
+	log.Info("Building %q\n", p.Filepath)
+
 	content, err := p.ParseContent()
 	if err != nil {
 		return err

@@ -199,7 +199,7 @@ func TestParseContent(t *testing.T) {
 
 func TestParseContentDjot(t *testing.T) {
 	p := &Page{
-		Filepath: "example/content/djot_test.dj",
+		Filepath: "example/content/contact.dj",
 	}
 
 	content, err := p.ParseContent()
@@ -207,7 +207,7 @@ func TestParseContentDjot(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if content != "<p>Hey, welcome on my site!</p>\n" {
+	if content != "<p>Get in touch through the contact details listed here.</p>\n" {
 		t.Errorf("Invalid content. Got %v", content)
 	}
 }
