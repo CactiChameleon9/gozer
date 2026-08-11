@@ -102,7 +102,7 @@ func parseFrontMatter(p *Page) error {
 	}
 	defer fh.Close()
 
-	buf := make([]byte, 1024)
+	buf := make([]byte, 4096)
 	n, err := fh.Read(buf)
 	if err != nil {
 		return err
