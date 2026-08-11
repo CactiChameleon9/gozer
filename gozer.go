@@ -77,6 +77,7 @@ type FeedDef struct {
 	Title string `toml:"title"`
 	Path string `toml:"path"`
 	Filename string `toml:"filename"`
+	Favicon string `toml:"favicon,omitempty"`
 	Length int `toml:"length"`
 }
 
@@ -351,10 +352,17 @@ func (s *Site) createRSSFeed(feedDef FeedDef) error {
 		GUID        string `xml:"guid"`
 	}
 
+	type Image struct {
+		Title         string `xml:"title",`
+		Link          string `xml:"link"`
+		URL           string `xml:"url"`
+	}
+
 	type Channel struct {
 		Title         string `xml:"title"`
 		Link          string `xml:"link"`
 		Description   string `xml:"description"`
+		Image         *Image `xml:"image,omitzero"`
 		Generator     string `xml:"generator"`
 		LastBuildDate string `xml:"lastBuildDate"`
 		Items         []Item `xml:"item"`
@@ -393,12 +401,25 @@ func (s *Site) createRSSFeed(feedDef FeedDef) error {
 		})
 	}
 
+	// image is using a pointer to allow "omitzero" in the xml parsing to work
+	image := &Image{}
+	if feedDef.Favicon != "" {
+		image = &Image{
+			Title: feedDef.Title,
+			Link:  s.SiteUrl,
+			URL:   s.SiteUrl + feedDef.Favicon,
+		}
+	} else {
+		image = nil
+	}
+
 	feed := Feed{
 		Version: "2.0",
 		Atom:    "http://www.w3.org/2005/Atom",
 		Channel: Channel{
 			Title:         feedDef.Title,
 			Link:          s.SiteUrl,
+			Image:         image,
 			Generator:     "Gozer",
 			LastBuildDate: time.Now().Format(time.RFC1123Z),
 			Items:         items,
@@ -558,7 +579,7 @@ func createDirectoryStructure(rootPath string) error {
 		Name    string
 		Content []byte
 	}{
-		{"config.toml", []byte("url = \"http://localhost:8080\"\ntitle = \"My website\"\n\n[[feeds]]\ntitle = \"My website feed\"\npath = \"content/\"\nfilename = \"feed.xml\"\nlength = 10\n")},
+		{"config.toml", []byte("url = \"http://localhost:8080\"\ntitle = \"My website\"\n\n[[feeds]]\ntitle = \"My website feed\"\npath = \"content/\"\nfilename = \"feed.xml\"\nfavicon = \"favicon.png\"\nlength = 10\n")},
 		{"templates/default.html", []byte("<!DOCTYPE html>\n<head>\n\t<title>{{ .Title }}</title>\n</head>\n<body>\n{{ .Content }}\n</body>\n</html>")},
 		{"content/index.md", []byte("+++\ntitle = \"Gozer!\"\n+++\n\nWelcome to my website.\n")},
 		// TODO djot does not (yet) support front matter, and godjot does not parse it. Once the front-matter syntax is settled, this should change. +djot +frontmatter
