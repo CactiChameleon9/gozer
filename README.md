@@ -124,8 +124,8 @@ type Page struct {
     // Template this page uses for rendering. Defaults to "default.html".
     Template      string
 
-    // Time this page was published (parsed from file name).
-    DatePublished time.Time
+    // Time this page was published (parsed from file name or front matter).
+    DatePublished time.Time      `toml:"datepublished"`
 
     // Time this page was last modified on the filesystem.
     DateModified  time.Time
@@ -140,10 +140,10 @@ type Page struct {
     Filepath      string
 
     // Parsed front matter values, keyed by TOML key
-    Meta          map[string]any
+    Meta          map[string]any `toml:"-"`
 
     // Deprecated: use Meta.
-    Attrs         map[string]any
+    Attrs         map[string]any `toml:"-"`
 }
 ```
 
