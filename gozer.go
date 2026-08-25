@@ -17,6 +17,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"regexp"
 
 	"github.com/BurntSushi/toml"
 )
@@ -608,6 +609,14 @@ func buildSite(rootPath string, configFile string) {
 		"HasSuffix": strings.HasSuffix,
 		"Contains":  strings.Contains,
 		"Replace":   strings.Replace,
+		"RegexFind": func(regex string, s string) string {
+			r := regexp.MustCompile(regex)
+			return r.FindString(s)
+		},
+		"RegexReplace": func(regex string, s string, repl string) string {
+			r := regexp.MustCompile(regex)
+			return r.ReplaceAllString(s, repl)
+		},
 		// GroupByDate groups pages in the list by the Time spec, e.g. "2006",
 		// "January", in reverse order
 		"GroupByDate": func(pages []Page, date string) []PageGroup {

@@ -183,6 +183,10 @@ length = 10 # 0 = no limit
 
 `Replace`: `Replace *string* *target* *replacement* *number*` (`-1` for all)
 
+`RegexFind`: `RegexFind *regex* *string*`
+
+`RegexReplace`: `RegexFind *regex* *target* *replacement*`
+
 `GroupByDate`: `GroupByDate .Pages *date_string*` Example:  
 ```
 {{ range GroupByDate .Pages "2006" }}
