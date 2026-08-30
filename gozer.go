@@ -354,7 +354,7 @@ func (s *Site) createRSSFeed(feedDef FeedDef) error {
 	}
 
 	type Image struct {
-		Title         string `xml:"title",`
+		Title         string `xml:"title"`
 		Link          string `xml:"link"`
 		URL           string `xml:"url"`
 	}
