@@ -210,6 +210,8 @@ length = 10 # 0 = no limit
 {{ (AsTime "2006-01-02" .Attrs.MyCustomDate ).Format "2 Jan 2006" }}
 ```
 
+`AsHTML`: `AsHTML *html_string*`
+
 ## Contributing
 
 Gozer development happens on [GitHub](https://github.com/).
